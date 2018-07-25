@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <script src="js/jquery.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/vue.js"></script>
+    <script>
+        $(function(){
+            var vue = new Vue({
+                el:'#app',
+                data:{
+                    url:'http://localhost:8080/kind',
+                    kind:{},
+                    kinds:[]
+                },
+                methods:{
+                    query:function () {
+                        var that = this;
+                        $.getJSON(that.url+'/query',function(data){
+                            that.kinds = data;
+                        })
+                    },
+                    find:function(kind){
+                        this.kind = kind;
+                    },
+                    clear:function(){
+                        this.kind = {};
+                    },
+                    save:function () {
+                        var reg = /^[\u4e00-\u9fa5]{2,5}$/
+                        if(!this.kind.name || !reg.test(this.kind.name)){
+                            return false;
+                        }
+                        var param = {
+                            id:this.kind.id,
+                            name:this.kind.name,
+                            icon:this.kind.icon,
+                            info:this.kind.info
+                        }
+                        var that = this;
+                        $.post(that.url+'/save',param,function (data) {
+                            if(data){
+                                that.query();
+                                that.clear();
+                            }else{
+
+                            }
+                        })
+                    },
+                    remove:function(id){
+                        var that = this;
+                        $.get(that.url+'/remove/'+id,function (data) {
+                            if(data){
+                                that.query();
+                                that.clear();
+                            }
+                        })
+                    }
+                }
+            });
+            vue.query();
+        })
+    </script>
+    <title>客房类型管理</title>
+</head>
+<body>
+    <div id="app" class="container">
+        <div class="row" style="margin-top: 15px">
+            <div class="col-md-3">
+                <input v-model="kind.name" class="form-control" placeholder="请输入客房类型名称">
+            </div>
+            <div class="col-md-3">
+                <input v-model="kind.icon" class="form-control" placeholder="请输入类型图标">
+            </div>
+            <div class="col-md-4">
+                <input v-model="kind.info" class="form-control" placeholder="请输入备注信息">
+            </div>
+            <div class="col-md-1">
+                <button @click="clear" class="btn btn-default btn-block">取消</button>
+            </div>
+            <div class="col-md-1">
+                <button @click="save" class="btn btn-primary btn-block">保存</button>
+            </div>
+        </div>
+        <div class="row" style="margin-top: 15px">
+            <div class="col-md-12">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                        <tr>
+                            <th>序号</th>
+                            <th>类型名称</th>
+                            <th>图标</th>
+                            <th>备注</th>
+                            <th>编辑</th>
+                            <th>删除</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr v-for="(k,index) in kinds">
+                            <td>{{index+1}}</td>
+                            <td>{{k.name}}</td>
+                            <td>{{k.icon}}</td>
+                            <td>{{k.info}}</td>
+                            <td>
+                                <button @click="find(k)" class="btn btn-warning">编辑</button>
+                            </td>
+                            <td>
+                                <button @click="remove(k.id)" class="btn btn-danger">删除</button>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

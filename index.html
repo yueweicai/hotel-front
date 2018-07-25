@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script src="js/vue.js"></script>
+    <title>Title</title>
+</head>
+<body>
+    <div id="app">
+        <input v-model="kind.name"><br>
+        <input v-model="kind.icon"><br>
+        <input v-model="kind.info"><br>
+        <button @click="save">保存</button>
+
+        <table border="1" width="100%">
+            <tr v-for="(k,index) in kinds">
+                <td>{{index+1}}</td>
+                <td>{{k.name}}</td>
+                <td>{{k.icon}}</td>
+                <td>{{k.info}}</td>
+            </tr>
+        </table>
+    </div>
+</body>
+<script>
+    //双向数据绑定
+    var vue = new Vue({
+        el:'#app',
+        data:{
+            kinds:[
+                {id:2,name:'标准间',icon:'AAA',info:'标准间'},
+                {id:3,name:'大床房',icon:'BBB',info:'大床房'},
+                {id:6,name:'套房',icon:'CCC',info:'套房'}
+            ],
+            kind:{id:'',name:'',icon:'',info:''}
+        },
+        methods:{
+            save:function(){
+                console.log(this.kind);
+            }
+        }
+    });
+</script>
+</html>

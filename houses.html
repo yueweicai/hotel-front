@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <script src="js/jquery.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/vue.js"></script>
+    <script>
+        $(function () {
+            var vue = new Vue({
+                el:'#app',
+                data:{
+                    pages:1,
+                    param:{kid:0,beds:0,page:1,rows:5},
+                    url:'http://localhost:8080',
+                    houses:[],
+                    kinds:[]
+                },
+                methods:{
+                    getkinds:function(){
+                        var that = this;
+                        $.getJSON(that.url+"/kind/query",function (data) {
+                            that.kinds = data;
+                        })
+                    },
+                    query:function () {
+                        var that = this;
+                        var ps = {
+                            page:that.param.page,
+                            rows:that.param.rows
+                        }
+                        if(that.param.kid>0){
+                            ps.kid = that.param.kid;
+                        }
+                        if(that.param.beds>0){
+                            ps.beds = that.param.beds;
+                        }
+                        $.getJSON(that.url+'/house/query',ps,function(data){
+                            that.houses = data.list;
+                            that.pages =  data.pages;
+                        })
+                    },
+                    reset:function () {
+                        this.param.kid = 0;
+                        this.param.beds = 0;
+                        this.query();
+                    },
+                    setpage:function(page){
+                        this.param.page = page;
+                        this.query();
+                    },
+                    enable:function(house){
+                        var ps = {
+                            id:house.id
+                        }
+                        if(house.status==0){
+                            ps.status=2;
+                        }else if(house.status==2){
+                            ps.status=0;
+                        }
+                        var that = this;
+                        $.get(that.url+"/house/enable/"+ps.id+"/"+ps.status,function(data){
+                            if(data){
+                                that.query();
+                            }else{
+                                console.log('客房状态修改失败');
+                            }
+                        })
+                    }
+                }
+            })
+            vue.query();
+            vue.getkinds();
+        })
+    </script>
+    <title>客房信息管理</title>
+</head>
+<body>
+    <div class="container" id="app">
+        <div class="row" style="margin-top: 15px">
+            <div class="col-md-2">
+                <select v-model="param.kid" class="form-control">
+                    <option value="0">请选择客房类型</option>
+                    <option v-for="k in kinds" :value="k.id">{{k.name}}</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select v-model="param.beds" class="form-control">
+                    <option value="0">请选择床位数</option>
+                    <option value="1">1张</option>
+                    <option value="2">2张</option>
+                    <option value="3">3张</option>
+                    <option value="4">4张</option>
+                    <option value="5">5张</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button @click="reset" class="btn btn-default">
+                    <i class="glyphicon glyphicon-repeat"></i> 重置
+                </button>
+                <button @click="query" class="btn btn-primary">
+                    <i class="glyphicon glyphicon-search"></i> 查询
+                </button>
+            </div>
+        </div>
+        <div class="row" style="margin-top: 15px">
+            <div class="col-md-12">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover">
+                        <thead>
+                        <tr>
+                            <th width="8%">序号</th>
+                            <th width="15%">客房名称</th>
+                            <th width="15%">客房类型</th>
+                            <th width="15%">平米数</th>
+                            <th width="15%">床位数</th>
+                            <th width="15%">基本价格</th>
+                            <th class="text-center" colspan="3">操作</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr v-for="(h,index) in houses">
+                            <td>{{index+1}}</td>
+                            <td>{{h.hname}}</td>
+                            <td>{{h.kind.name}}</td>
+                            <td>{{h.size}}</td>
+                            <td>{{h.beds}}</td>
+                            <td>{{h.price}}</td>
+                            <td>
+                                <button class="btn btn-primary" @click="enable(h)">
+                                    <span v-if="h.status==0">停用</span>
+                                    <span v-if="h.status==2">启用</span>
+                                </button>
+                            </td>
+                            <td>
+                                <button class="btn btn-warning">修改</button>
+                            </td>
+                            <td>
+                                <button class="btn btn-danger">删除</button>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12 text-center">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination" style="margin: 0">
+                        <li @click="setpage(1)">
+                            <a href="#" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                        <li v-for="p in pages" @click="setpage(p)">
+                            <a href="#">{{p}}</a>
+                        </li>
+                        <li @click="setpage(pages)">
+                            <a href="#" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
