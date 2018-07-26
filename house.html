@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <script src="js/jquery.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/vue.js"></script>
+    <style>
+        .input-group-addon{background: #fff}
+        .mrow{margin-top:15px;padding:5px 15px;}
+        .msg{padding-top:10px;font-size:16px;font-weight: bold}
+        .file{opacity: 0;width:0;height:0;position:absolute;top:0;left:0;z-index:-1}
+    </style>
+    <script>
+        $(function () {
+            var vue = new Vue({
+               el:'#app',
+               data:{
+                   url:'http://localhost:8080',
+                   kinds:[],
+                   house:{}
+               },
+               methods:{
+                   getkinds:function(){
+                       var that = this;
+                       $.getJSON(that.url+"/kind/query",function (data) {
+                           that.kinds = data;
+                       })
+                   },
+                   save:function () {
+                       var that = this;
+                       console.log(that.house);
+                       $.post(that.url+'/house/save',that.house,function (data) {
+                            if(data && data.id>0) {
+                                that.house.id = data.id;
+                                $("#msg").html("<span style='color:darkgreen'>客房基本信息保存成功！</span>");
+                            }else{
+                                $("#msg").html("<span style='color:red'>客房基本信息保存失败，请重试！</span>");
+                            }
+                       })
+                   }
+               }
+            });
+            vue.getkinds();
+
+            $("#profile .thumbnail").click(function(){
+                var f = $(this).parent().find(".file");
+                f.click();
+            })
+            $(".file").change(function(){
+                var $img = $(this).parent().find("img");
+                var file = this.files[0];
+                var reader = new FileReader();
+                reader.onloadend = function () {
+                    $img.attr("src",reader.result);
+                }
+                if(file){
+                    reader.readAsDataURL(file);
+                }else{
+                    $img.attr('src','images/root.png');
+                }
+            })
+            $("#btnup").click(function () {
+                var files = new Array();
+                var fd = new FormData();
+                for(var i=0;i<4;i++){
+                    files[i] = $(".file")[i].files[0];
+                    fd.append("files[]",files[i]);
+                }
+                $.ajax({
+                    url:'http://localhost:8080/hotel2/house/uploads',
+                    type:'POST',
+                    data:fd,
+                    async: false,
+                    cache: false,
+                    contentType:false,
+                    processData:false,
+                    succes:function(data){
+                        console.log(data)
+                    },
+                    error:function(data){
+                        console.log(data)
+                    }
+                })
+            })
+        })
+    </script>
+    <title>客房信息管理</title>
+</head>
+<body>
+    <div class="container" id="app">
+        <div class="row">
+            <div class="col-md-12">
+                <div>
+
+                    <!-- Nav tabs -->
+                    <ul class="nav nav-tabs" role="tablist">
+                        <li role="presentation" class="active">
+                            <a href="#home" aria-controls="home" role="tab" data-toggle="tab">客房基本信息</a>
+                        </li>
+                        <li role="presentation">
+                            <a href="#profile" aria-controls="profile" role="tab" data-toggle="tab">客房图片</a>
+                        </li>
+                    </ul>
+
+                    <!-- Tab panes -->
+                    <div class="tab-content">
+                        <div role="tabpanel" class="tab-pane active" id="home">
+                            <div class="form-group mrow">
+                                <div class="input-group">
+                                    <label class="input-group-addon">客房名称</label>
+                                    <input v-model="house.hname" class="form-control">
+                                    <label class="input-group-addon">号</label>
+                                </div>
+                            </div>
+                            <div class="form-group mrow">
+                                <div class="input-group">
+                                    <label class="input-group-addon">客房类型</label>
+                                    <select v-model="house.kid" class="form-control">
+                                        <option v-for="k in kinds" :value="k.id">{{k.name}}</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group mrow">
+                                <div class="input-group">
+                                    <label class="input-group-addon">床位数量</label>
+                                    <input v-model="house.beds" type="number" class="form-control">
+                                    <label class="input-group-addon">张</label>
+                                </div>
+                            </div>
+                            <div class="form-group mrow">
+                                <div class="input-group">
+                                    <label class="input-group-addon">客房大小</label>
+                                    <input v-model="house.size" type="number" class="form-control">
+                                    <label class="input-group-addon">号</label>
+                                </div>
+                            </div>
+                            <div class="form-group mrow">
+                                <div class="input-group">
+                                    <label class="input-group-addon">基础价格</label>
+                                    <input v-model="house.price" type="number" class="form-control">
+                                    <label class="input-group-addon">元</label>
+                                </div>
+                            </div>
+                            <div class="form-group mrow">
+                                <div class="input-group">
+                                    <label class="input-group-addon">备注信息</label>
+                                    <input v-model="house.info" class="form-control">
+                                </div>
+                            </div>
+                            <div class="row mrow">
+                                <div class="col-md-2">
+                                    <a href="houses.html" class="btn btn-default btn-block">客房列表</a>
+                                </div>
+                                <div class="col-md-8">
+                                    <p class="text-center msg" id="msg"></p>
+                                </div>
+                                <div class="col-md-2">
+                                    <button @click="save" class="btn btn-primary btn-block">保存</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div role="tabpanel" class="tab-pane" id="profile">
+                            <div class="row mrow">
+                                <div class="col-xs-6 col-md-3">
+                                    <input type="file" class="file">
+                                    <a href="#" class="thumbnail">
+                                        <img src="images/room.png" alt="">
+                                    </a>
+                                </div>
+                                <div class="col-xs-6 col-md-3">
+                                    <input type="file" class="file">
+                                    <a href="#" class="thumbnail">
+                                        <img src="images/room.png" alt="">
+                                    </a>
+                                </div>
+                                <div class="col-xs-6 col-md-3">
+                                    <input type="file" class="file">
+                                    <a href="#" class="thumbnail">
+                                        <img src="images/room.png" alt="">
+                                    </a>
+                                </div>
+                                <div class="col-xs-6 col-md-3">
+                                    <input type="file" class="file">
+                                    <a href="#" class="thumbnail">
+                                        <img src="images/room.png" alt="">
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="row mrow">
+                                <div class="col-md-12"><hr/></div>
+                            </div>
+                            <div class="row mrow">
+                                <div class="col-md-10"></div>
+                                <div class="col-md-2">
+                                    <button id="btnup" class="btn btn-primary btn-block">上传图片</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
