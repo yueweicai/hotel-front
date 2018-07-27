@@ -14,7 +14,7 @@
                 data:{
                     pages:1,
                     param:{kid:0,beds:0,page:1,rows:5},
-                    url:'http://localhost:8080',
+                    url:'http://localhost:8080/hotel2',
                     houses:[],
                     kinds:[]
                 },
@@ -68,6 +68,9 @@
                                 console.log('客房状态修改失败');
                             }
                         })
+                    },
+                    show:function(id){
+                        location.href = "house.html?id="+id;
                     }
                 }
             })
@@ -135,7 +138,7 @@
                                 </button>
                             </td>
                             <td>
-                                <button class="btn btn-warning">修改</button>
+                                <button @click="show(h.id)" class="btn btn-warning">修改</button>
                             </td>
                             <td>
                                 <button class="btn btn-danger">删除</button>

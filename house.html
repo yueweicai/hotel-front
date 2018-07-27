@@ -15,14 +15,41 @@
     </style>
     <script>
         $(function () {
+            var href = location.href;
+            var house_id = 0;
+            if(href.indexOf("?")>0) {
+                var id = href.split("?")[1];
+                house_id = id.split("=")[1];
+            }
             var vue = new Vue({
                el:'#app',
                data:{
-                   url:'http://localhost:8080',
+                   url:'http://localhost:8080/hotel2',
                    kinds:[],
                    house:{}
                },
                methods:{
+                   gethouse:function(){
+                       var that = this;
+                       if(house_id>0){
+                           $.getJSON(that.url+"/house/find/"+house_id,function(data){
+                              that.house = data;
+                              that.house.kid = data.kind.id;
+                              if(data.pica) {
+                                  $(".thumbnail>img:eq(0)").attr("src", that.url + "/images/" + data.pica);
+                              }
+                              if(data.picb) {
+                                  $(".thumbnail>img:eq(1)").attr("src", that.url + "/images/" + data.picb);
+                              }
+                              if(data.picc) {
+                                  $(".thumbnail>img:eq(2)").attr("src", that.url + "/images/" + data.picc);
+                              }
+                              if(data.picd) {
+                                  $(".thumbnail>img:eq(3)").attr("src", that.url + "/images/" + data.picd);
+                              }
+                           });
+                       }
+                   },
                    getkinds:function(){
                        var that = this;
                        $.getJSON(that.url+"/kind/query",function (data) {
@@ -31,8 +58,16 @@
                    },
                    save:function () {
                        var that = this;
-                       console.log(that.house);
-                       $.post(that.url+'/house/save',that.house,function (data) {
+                       var ps = {
+                           id:that.house.id,
+                           hname:that.house.hname,
+                           size:that.house.size,
+                           beds:that.house.beds,
+                           price:that.house.price,
+                           kid:that.house.kid,
+                           info:that.house.info
+                       }
+                       $.post(that.url+'/house/save',ps,function (data) {
                             if(data && data.id>0) {
                                 that.house.id = data.id;
                                 $("#msg").html("<span style='color:darkgreen'>客房基本信息保存成功！</span>");
@@ -44,7 +79,7 @@
                }
             });
             vue.getkinds();
-
+            vue.gethouse();
             $("#profile .thumbnail").click(function(){
                 var f = $(this).parent().find(".file");
                 f.click();
@@ -63,12 +98,24 @@
                 }
             })
             $("#btnup").click(function () {
-                var files = new Array();
-                var fd = new FormData();
-                for(var i=0;i<4;i++){
-                    files[i] = $(".file")[i].files[0];
-                    fd.append("files[]",files[i]);
+                //判断客房id是否存在（客房基本信息是否保存成功）
+                if(!vue.house.id || vue.house.id<=0){
+                    return false;
                 }
+                //构建FormData数据对象
+                var fd = new FormData();
+                fd.append("id",vue.house.id);
+                //获取文件框中的每一个文件
+                pica = $(".file")[0].files[0];
+                picb = $(".file")[1].files[0];
+                picc = $(".file")[2].files[0];
+                picd = $(".file")[3].files[0];
+                //将获取到的文件保存到FormData对象中
+                fd.append("pica",pica);
+                fd.append("picb",picb);
+                fd.append("picc",picc);
+                fd.append("picd",picd);
+                //将FormData对象发送到服务器的控制器
                 $.ajax({
                     url:'http://localhost:8080/hotel2/house/uploads',
                     type:'POST',
@@ -77,11 +124,15 @@
                     cache: false,
                     contentType:false,
                     processData:false,
-                    succes:function(data){
-                        console.log(data)
+                    success:function(data){
+                        if(data){
+                            $(".msgup").html("<span style='color:darkgreen'>图片上传成功！</span>");
+                        }else{
+                            $(".msgup").html("<span style='color:red'>图片上传失败，请重试！</span>");
+                        }
                     },
                     error:function(data){
-                        console.log(data)
+                        $(".msgup").html("<span style='color:red'>图片上传失败，请重试！</span>");
                     }
                 })
             })
@@ -193,7 +244,9 @@
                                 <div class="col-md-12"><hr/></div>
                             </div>
                             <div class="row mrow">
-                                <div class="col-md-10"></div>
+                                <div class="col-md-10">
+                                    <p class="msgup"></p>
+                                </div>
                                 <div class="col-md-2">
                                     <button id="btnup" class="btn btn-primary btn-block">上传图片</button>
                                 </div>
