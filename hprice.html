@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <script src="js/jquery.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/vue.js"></script>
+    <script src="js/bootstrap-datepicker.min.js"></script>
+    <script src="js/bootstrap-datepicker.zh-CN.min.js"></script>
+    <style>
+        .input-group-addon{background: #fff}
+        .only{background: #fff !important;}
+    </style>
+    <script>
+        $(function () {
+            var vue = new Vue({
+                el:'#app',
+                data:{
+                    url:'http://localhost:8080/hotel',
+                    kinds:[],
+                    item:{kid:0},
+                    money:0
+                },
+                methods:{
+                    getkinds:function(){
+                        var that = this;
+                        $.getJSON(that.url+'/kind/query',function(data){
+                            that.kinds = data;
+                        })
+                    },
+                    calc:function(){
+                        var p = this.item.price;
+                        var d = this.item.dis;
+                        if(!d || d<=0 || d>1){
+                            d = 1;
+                            this.item.dis = 1;
+                        }
+                        this.money = p*d;
+                    },
+                    save:function(){
+                        var that = this;
+                        var ps = {
+                           id:that.item.id,
+                           kid:that.item.kid,
+                           price:that.item.price,
+                           dis:that.item.dis,
+                           sdate:$("#sdate").val(),
+                           edate:$("#edate").val()
+                        }
+                        $.post(that.url+'/hprice/save',ps,function (data) {
+                            if(data){
+                               $(".msg").html("<span style='color:darkgreen'>客房价格信息保存成功！</span>");
+                            }else{
+                               $(".msg").html("<span style='color:darkred'>客房价格信息保存失败，请重试！</span>");
+                            }
+                            setTimeout(function(){
+                                $(".msg").empty();
+                            },3000);
+                        });
+                    }
+                }
+            });
+
+            vue.getkinds();
+
+            $("#sdate,#edate").datepicker({
+                language:'zh-CN',
+                autoclose:true,
+                format:'yyyy-mm-dd',
+                todayBtn:'linked'
+            });
+        })
+    </script>
+    <title>客房价格设置</title>
+</head>
+<body>
+    <div class="container" id="app">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="form-group">
+                    <div class="input-group">
+                        <label class="input-group-addon">客房类型</label>
+                        <select v-model="item.kid" class="form-control">
+                            <option value="0">选择客房类型</option>
+                            <option v-for="k in kinds" :value="k.id">{{k.name}}</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="input-group">
+                        <label class="input-group-addon">起始日期</label>
+                        <input id="sdate" class="form-control only" readonly>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="input-group">
+                        <label class="input-group-addon">终止日期</label>
+                        <input id="edate" class="form-control only" readonly>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="input-group">
+                        <label class="input-group-addon">客房价格</label>
+                        <input v-model="item.price" type="number" class="form-control">
+                        <label class="input-group-addon">元</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="input-group">
+                        <label class="input-group-addon">价格折扣</label>
+                        <input v-model="item.dis" type="number" class="form-control">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="input-group">
+                        <label class="input-group-addon">折后价格</label>
+                        <input @click="calc" v-model="money" type="number" class="form-control only" readonly>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-2 col-sm-3">
+                <a href="hprices.html" class="btn btn-default btn-block">价格列表</a>
+            </div>
+            <div class="col-md-8 col-sm-6">
+                <p class="msg text-center"></p>
+            </div>
+            <div class="col-md-2 col-sm-3">
+                <button @click="save" class="btn btn-primary btn-block">保存</button>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
