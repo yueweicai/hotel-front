@@ -2,43 +2,34 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <script src="js/vue.js"></script>
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <script src="js/jquery.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
     <title>Title</title>
+    <style>
+        #header{background: #0B82BD;color:#fff}
+
+    </style>
+    <script type="text/javascript">
+        $(function(){
+            $("#header").load("header.html");
+            $("#nav").load("left.html");
+        })
+    </script>
 </head>
 <body>
-    <div id="app">
-        <input v-model="kind.name"><br>
-        <input v-model="kind.icon"><br>
-        <input v-model="kind.info"><br>
-        <button @click="save">保存</button>
+    <div class="container">
+        <div class="row" id="header">
 
-        <table border="1" width="100%">
-            <tr v-for="(k,index) in kinds">
-                <td>{{index+1}}</td>
-                <td>{{k.name}}</td>
-                <td>{{k.icon}}</td>
-                <td>{{k.info}}</td>
-            </tr>
-        </table>
+        </div>
+        <div class="row">
+            <div class="col-md-3" id="nav">
+
+            </div>
+            <div class="col-md-9">
+                <h1>主体内容</h1>
+            </div>
+        </div>
     </div>
 </body>
-<script>
-    //双向数据绑定
-    var vue = new Vue({
-        el:'#app',
-        data:{
-            kinds:[
-                {id:2,name:'标准间',icon:'AAA',info:'标准间'},
-                {id:3,name:'大床房',icon:'BBB',info:'大床房'},
-                {id:6,name:'套房',icon:'CCC',info:'套房'}
-            ],
-            kind:{id:'',name:'',icon:'',info:''}
-        },
-        methods:{
-            save:function(){
-                console.log(this.kind);
-            }
-        }
-    });
-</script>
 </html>
