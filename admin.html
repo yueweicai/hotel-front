@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <script src="js/jquery.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/vue.js"></script>
+    <title>系统用户管理</title>
+    <style>
+        #header{background: #0B82BD;color:#fff}
+    </style>
+    <script type="text/javascript">
+        $(function(){
+            var vue = new Vue({
+                el:'#app',
+                data:{
+                    url:'http://localhost:8080/hotel',
+                    powers:[],
+                    admin:{status:0}
+                },
+                methods:{
+                    save : function () {
+                        var that = this;
+                        var bean = {
+                            username:that.admin.username,
+                            password:that.admin.password,
+                            status:that.admin.status
+                        }
+                        var pids = new Array();
+                        $("input[type=checkbox]").each(function () {
+                            if(this.checked){
+                                pids.push(this.value);
+                            }
+                        })
+
+                        $.post(that.url+"/admin/save",{username:bean.username,password:bean.password,status:bean.status,'pids':pids},function (data) {
+                            console.log(data)
+                        })
+                    },
+                    getpowers:function () {
+                        var that = this;
+                        $.getJSON(that.url+'/power/query',function (data) {
+                            that.powers = data;
+                        })
+                    },
+                    check : function(p){
+                        var that = this;
+                        if(p.pid>0){
+                            $.each(that.powers,function(){
+                                if(this.id==p.pid){
+                                    $("input[value="+p.pid+"]")[0].checked = true;
+                                }
+                            })
+                        }else{
+                            $.each(that.powers,function(){
+                                if(this.pid==p.id){
+                                    $("input[value="+this.id+"]")[0].checked = true;
+                                }
+                            })
+                        }
+                    }
+                }
+            })
+            vue.getpowers();
+            $("#header").load("header.html");
+            $("#nav").load("left.html");
+        })
+    </script>
+</head>
+<body>
+    <div class="container-fluid" id="app">
+        <div class="row" id="header"></div>
+        <div class="row">
+            <div class="col-md-3" id="nav"></div>
+            <div class="col-md-9">
+                <div class="form-group">
+                    <div class="input-group">
+                        <label class="input-group-addon">账号</label>
+                        <input v-model="admin.username" class="form-control">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="input-group">
+                        <label class="input-group-addon">密码</label>
+                        <input v-model="admin.password" class="form-control">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="input-group">
+                        <label class="input-group-addon">角色</label>
+                        <select v-model="admin.status" class="form-control">
+                            <option value="0">普通用户</option>
+                            <option value="1">超级用户</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-1">
+                        <p style="padding:0px 10px">权限列表</p>
+                    </div>
+                    <div class="col-md-11">
+                        <div class="row">
+                            <div v-for="p in powers" class="col-md-3">
+                                <input @click="check(p)" type="checkbox" :value="p.id">
+                                <span>{{p.pname}}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-2"></div>
+                    <div class="col-md-8"></div>
+                    <div class="col-md-2">
+                        <button @click="save" class="btn btn-primary btn-block">保存</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
