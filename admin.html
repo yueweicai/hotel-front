@@ -12,6 +12,12 @@
         #header{background: #0B82BD;color:#fff}
     </style>
     <script type="text/javascript">
+        var user_id = null;
+        var href = location.href;
+        if(href.indexOf("?")>0){
+            var str = href.split("?")[1];
+            user_id = str.split("=")[1];
+        }
         $(function(){
             var vue = new Vue({
                 el:'#app',
@@ -21,21 +27,46 @@
                     admin:{status:0}
                 },
                 methods:{
+                    find : function () {
+                        if(user_id){
+                            var that = this;
+                            $.getJSON(that.url+'/admin/find',{id:user_id},function(data){
+                                that.admin = data;
+                                console.log(data.powers)
+                                if(data.powers){
+                                    $("input[type=checkbox]").each(function(){
+                                        var aid = this.value;
+                                        for(i=0;i<data.powers.length;i++){
+                                            if(aid==data.powers[i].id){
+                                                this.checked = true;
+                                                break;
+                                            }
+                                        }
+                                    })
+                                }
+                            })
+                        }
+                    },
                     save : function () {
                         var that = this;
                         var bean = {
+                            id:that.admin.id,
                             username:that.admin.username,
                             password:that.admin.password,
                             status:that.admin.status
                         }
-                        var pids = new Array();
+                        var pids = "";
                         $("input[type=checkbox]").each(function () {
                             if(this.checked){
-                                pids.push(this.value);
+                                pids+=this.value+",";
                             }
                         })
+                        if(pids.length>0 && pids.indexOf(",")>0){
+                            pids = pids.substr(0,pids.length-1);
+                        }
+                        bean.pids = pids;
 
-                        $.post(that.url+"/admin/save",{username:bean.username,password:bean.password,status:bean.status,'pids':pids},function (data) {
+                        $.post(that.url+"/admin/save",bean,function (data) {
                             console.log(data)
                         })
                     },
@@ -64,6 +95,7 @@
                 }
             })
             vue.getpowers();
+            vue.find();
             $("#header").load("header.html");
             $("#nav").load("left.html");
         })
