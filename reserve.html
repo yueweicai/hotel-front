@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <script src="js/jquery.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/bootstrap-datepicker.min.js"></script>
+    <script src="js/bootstrap-datepicker.zh-CN.min.js"></script>
+    <script src="js/vue.js"></script>
+    <title>客房预订管理</title>
+    <style>
+        #header{background: #0B82BD;color:#fff}
+    </style>
+    <script type="text/javascript">
+        $(function(){
+            var vue = new Vue({
+                el:'#app',
+                data:{
+                    url:'http://localhost:8080/hotel',
+                    kinds:[],
+                    houses:[],
+                    house:{}
+                },
+                methods:{
+                    choose:function(h){
+                        this.house = h;
+                        $("#hid").val(h.hname);
+                        $("#ps").val(h.beds);
+                        $("#dialog").modal('hide');
+                    },
+                    gethouse:function () {
+                       var that = this;
+                       var ps = {
+                           kid:$("#kid").val(),
+                           rdate:$("#rdate").val(),
+                           ldate:$("#ldate").val()
+                       }
+                       $.getJSON(that.url+"/house/query2",ps,function (data) {
+                           that.houses = data;
+                           $("#dialog").modal('show');
+                       })
+                    },
+                    querykinds:function () {
+                        var that = this;
+                        $.getJSON(that.url+"/kind/query",function (data) {
+                            that.kinds = data;
+                        })
+                    },
+                    getprice:function(event){
+                        var that = this;
+                        var el = event.currentTarget;
+                        var ps = {
+                            kid:el.value,
+                            sdate:$("#rdate").val(),
+                            edate:$("#ldate").val()
+                        }
+                        if(ps.sdate && ps.edate) {
+                            $.getJSON(that.url + "/hprice/get", ps, function (data) {
+                                var price = data.price * data.dis;
+                                $("#price").val(price);
+                            })
+                        }
+                    },
+                    save:function(){
+                        var that = this;
+                        var ps = {
+                            rdate:$("#rdate").val(),
+                            ldate:$("#ldate").val(),
+                            hid:that.house.id,
+                            price:$("#price").val(),
+                            persons:$("#ps").val(),
+                            custom:$("#custom").val(),
+                            phone:$("#phone").val()
+                        }
+                        var t1 = new Date(ps.rdate).getTime();
+                        var t2 = new Date(ps.ldate).getTime();
+                        var days = (t2-t1)/1000/60/60/24;
+                        ps.total = days*ps.price;
+                        $.post(that.url+'/reserve/save',ps,function (data) {
+                            if(data){
+                                $(".msg").html("<span style='color:darkgreen'>客房预订记录保存成功！</span>")
+                            }else{
+                                $(".msg").html("<span style='color:darkred'>客房预订记录保存失败，请重试！</span>")
+                            }
+                        })
+                    }
+                }
+            });
+            vue.querykinds();
+
+            $("#header").load("header.html");
+            $("#nav").load("left.html");
+
+            $("#rdate,#ldate").datepicker({
+                language:'zh-CN',
+                autoclose:true,
+                format:'yyyy-mm-dd',
+                todayBtn:'linked'
+            });
+        })
+    </script>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row" id="header">
+
+        </div>
+        <div class="row">
+            <div class="col-md-3" id="nav"></div>
+            <div class="col-md-9" id="app">
+                <!-- 模态框 -->
+                <div id="dialog" class="modal fade" tabindex="-1" role="dialog">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                                <h4 class="modal-title">客房列表</h4>
+                            </div>
+                            <div class="modal-body">
+                                <table class="table table-bordered table-hover">
+                                    <thead>
+                                    <tr>
+                                        <th>序号</th>
+                                        <th>客房名称</th>
+                                        <th>价格</th>
+                                        <th>床位数</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr @click="choose(h)" v-for="(h,index) in houses">
+                                        <td>{{index+1}}</td>
+                                        <td>{{h.hname}}</td>
+                                        <td>{{h.price}}</td>
+                                        <td>{{h.beds}}</td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div><!-- /.modal-content -->
+                    </div><!-- /.modal-dialog -->
+                </div><!-- /.modal -->
+                <!-- 模态框 -->
+
+                <div class="form-group">
+                    <div class="input-group">
+                        <label class="input-group-addon">客户姓名</label>
+                        <input id="custom" class="form-control">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="input-group">
+                        <label class="input-group-addon">联系电话</label>
+                        <input id="phone" class="form-control">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="input-group">
+                        <label class="input-group-addon">入住日期</label>
+                        <input id="rdate" class="form-control">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="input-group">
+                        <label class="input-group-addon">离店日期</label>
+                        <input id="ldate" class="form-control">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="input-group">
+                        <label class="input-group-addon">客房类型</label>
+                        <select id="kid" @change="getprice($event)" class="form-control">
+                            <option value="0">请选择客房类型</option>
+                            <option v-for="k in kinds" :value="k.id">{{k.name}}</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="input-group">
+                        <label class="input-group-addon">预订客房</label>
+                        <input id="hid" @click="gethouse()" class="form-control" readonly>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="input-group">
+                        <label class="input-group-addon">客房价格</label>
+                        <input id="price" class="form-control">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="input-group">
+                        <label class="input-group-addon">入住人数</label>
+                        <input id="ps" class="form-control">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-2">
+                        <a href="reserves.html" class="btn btn-default btn-block">预订列表</a>
+                    </div>
+                    <div class="col-md-8">
+                        <p class="msg"></p>
+                    </div>
+                    <div class="col-md-2">
+                        <button @click="save" class="btn btn-primary btn-block">保存</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
